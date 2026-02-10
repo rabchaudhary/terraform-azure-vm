@@ -3,9 +3,6 @@ trigger: none
 pool:
   vmImage: ubuntu-latest
 
-variables:
-  TF_IN_AUTOMATION: true
-
 steps:
 
 # Install Terraform
@@ -15,26 +12,25 @@ steps:
     terraformVersion: latest
 
 
-# Terraform using Service Principal (CORRECT WAY)
+# Terraform using Service Principal
 - task: AzureCLI@2
   displayName: Terraform Init Plan Apply
   inputs:
     azureSubscription: terraform-connection
-    addSpnToEnvironment: true     # ⭐ VERY IMPORTANT
+    addSpnToEnvironment: true
     scriptType: bash
     scriptLocation: inlineScript
     inlineScript: |
       set -e
 
-      echo "===== Export ARM credentials ====="
+      echo "===== Fetch Subscription ID ====="
+      SUB_ID=$(az account show --query id -o tsv)
 
+      echo "===== Export ARM credentials ====="
       export ARM_CLIENT_ID=$servicePrincipalId
       export ARM_CLIENT_SECRET=$servicePrincipalKey
-      export ARM_SUBSCRIPTION_ID=$subscriptionId
       export ARM_TENANT_ID=$tenantId
-
-      echo "===== Terraform Version ====="
-      terraform --version
+      export ARM_SUBSCRIPTION_ID=$SUB_ID
 
       echo "===== Terraform Init ====="
       terraform init -reconfigure -input=false
@@ -50,6 +46,4 @@ steps:
         -input=false -no-color
 
       echo "===== Terraform Apply ====="
-      terraform apply -auto-approve -input=false tfplan
-
-      echo "===== Deployment Finished Successfully ====="
+      terraform apply -input=false -auto-approve tfplan
