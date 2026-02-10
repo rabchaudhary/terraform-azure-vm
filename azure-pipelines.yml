@@ -1,45 +1,31 @@
-trigger:
-- main
+trigger: none
 
 pool:
   vmImage: ubuntu-latest
 
-variables:
-  workingDirectory: '.'
-
 steps:
 
-# Install Terraform
 - task: TerraformInstaller@1
-  displayName: Install Terraform
   inputs:
-    terraformVersion: 'latest'
+    terraformVersion: latest
 
-
-# Login + Run Terraform
 - task: AzureCLI@2
   displayName: Terraform Init Plan Apply
   inputs:
-    azureSubscription: 'terraform-connection'
+    azureSubscription: terraform-connection
     scriptType: bash
     scriptLocation: inlineScript
-    workingDirectory: $(workingDirectory)
     inlineScript: |
       set -e
 
-      echo "===== Terraform Version ====="
-      terraform --version
-
-      echo "===== Terraform Init ====="
       terraform init -reconfigure -input=false
 
-      echo "===== Terraform Validate ====="
       terraform validate
 
-      echo "===== Terraform Plan ====="
-      terraform plan -out=tfplan -input=false -no-color
+      terraform plan \
+        -var="prefix=demo" \
+        -var="location=westus" \
+        -out=tfplan \
+        -input=false -no-color
 
-      echo "===== Terraform Apply ====="
       terraform apply -input=false -auto-approve tfplan
-
-      echo "===== Done ====="
