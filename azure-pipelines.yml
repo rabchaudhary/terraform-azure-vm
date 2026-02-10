@@ -9,21 +9,37 @@ variables:
 
 steps:
 
+# Install Terraform
 - task: TerraformInstaller@1
+  displayName: Install Terraform
   inputs:
     terraformVersion: 'latest'
 
+
+# Login + Run Terraform
 - task: AzureCLI@2
+  displayName: Terraform Init Plan Apply
   inputs:
     azureSubscription: 'terraform-connection'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
+    scriptType: bash
+    scriptLocation: inlineScript
+    workingDirectory: $(workingDirectory)
     inlineScript: |
-      cd $(workingDirectory)
+      set -e
 
-      terraform init -reconfigure
+      echo "===== Terraform Version ====="
+      terraform --version
 
+      echo "===== Terraform Init ====="
+      terraform init -reconfigure -input=false
 
-      terraform plan -out=tfplan
+      echo "===== Terraform Validate ====="
+      terraform validate
 
-      terraform apply -auto-approve tfplan
+      echo "===== Terraform Plan ====="
+      terraform plan -out=tfplan -input=false -no-color
+
+      echo "===== Terraform Apply ====="
+      terraform apply -input=false -auto-approve tfplan
+
+      echo "===== Done ====="
