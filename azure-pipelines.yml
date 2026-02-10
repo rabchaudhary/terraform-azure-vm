@@ -21,7 +21,8 @@ steps:
     inlineScript: |
       cd $(workingDirectory)
 
-      terraform init
+      terraform init -reconfigure
+
 
       terraform plan -out=tfplan
 
